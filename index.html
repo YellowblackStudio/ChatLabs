@@ -98,7 +98,7 @@ footer button {
 </footer>
 
 <script>
-const supabase = supabase.createClient(
+const supabaseClient = supabase.createClient(
   "https://ccgwamhgtnwzipnvaksg.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZ3dhbWhndG53emlwbnZha3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NzU1NTAsImV4cCI6MjA4MjQ1MTU1MH0.RLo9m4YuJBl6ZTqR0tTZRy_-8psBJesvCBv2DUr_wJE"
 );
@@ -121,15 +121,18 @@ async function send() {
   const msg  = document.getElementById("msg").value.trim();
   if (!name || !msg) return;
 
-  await supabase.from("messages").insert({
-    user_name: name,
-    message: msg
-  });
+  const { error } = await supabaseClient
+    .from("messages")
+    .insert({ user_name: name, message: msg });
+
+  if (error) {
+    console.error("Erro ao enviar:", error);
+  }
 
   document.getElementById("msg").value = "";
 }
 
-supabase
+supabaseClient
   .channel("chatlab")
   .on(
     "postgres_changes",
@@ -140,6 +143,7 @@ supabase
   )
   .subscribe();
 </script>
+
 
 </body>
 </html>
