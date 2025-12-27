@@ -144,6 +144,27 @@ supabaseClient
   .subscribe();
 </script>
 
+<script>
+async function loadMessages() {
+  const { data, error } = await supabaseClient
+    .from("messages")
+    .select("*")
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao carregar mensagens:", error);
+    return;
+  }
+
+  data.forEach(msg => {
+    addMessage(msg.user_name, msg.message);
+  });
+}
+
+// chama ao abrir o site
+loadMessages();
+</script>
+
 
 </body>
 </html>
