@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>ChatLab 💬</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+  background:#0e0e1a;
+  color:white;
+  font-family:Arial, sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+#chat {
+  width:380px;
+  background:#1b1b3a;
+  padding:12px;
+  border-radius:12px;
+  box-shadow:0 0 20px #000;
+}
+
+#messages {
+  height:260px;
+  overflow-y:auto;
+  margin:10px 0;
+}
+
+.msg { margin:5px 0; }
+.user { color:#6cf; font-weight:bold; }
+
+input, button {
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+  border:none;
+  border-radius:6px;
+}
+
+button {
+  background:#6cf;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="chat">
+  <h2>ChatLab 💬</h2>
+
+  <input id="name" placeholder="Seu nome">
+  <div id="messages"></div>
+  <input id="msg" placeholder="Digite sua mensagem">
+  <button onclick="send()">Enviar</button>
+</div>
+
+<script>
+const supabase = supabase.createClient(
+  "https://ccgwamhgtnwzipnvaksg.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZ3dhbWhndG53emlwbnZha3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NzU1NTAsImV4cCI6MjA4MjQ1MTU1MH0.RLo9m4YuJBl6ZTqR0tTZRy_-8psBJesvCBv2DUr_wJE"
+);
+
+const messagesDiv = document.getElementById("messages");
+
+function addMessage(user, text) {
+  const div = document.createElement("div");
+  div.className = "msg";
+  div.innerHTML = `<span class="user">${user}:</span> ${text}`;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function send() {
+  const name = document.getElementById("name").value.trim();
+  const msg  = document.getElementById("msg").value.trim();
+  if(!name || !msg) return;
+
+  await supabase.from("messages").insert({
+    user_name: name,
+    message: msg
+  });
+
+  document.getElementById("msg").value = "";
+}
+
+// realtime listener
+supabase
+  .channel("chatlab-realtime")
+  .on(
+    "postgres_changes",
+    { event: "INSERT", schema: "public", table: "messages" },
+    payload => {
+      addMessage(payload.new.user_name, payload.new.message);
+    }
+  )
+  .subscribe();
+</script>
+
+</body>
+</html>
